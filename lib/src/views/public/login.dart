@@ -50,90 +50,92 @@ class _LoginFormState extends State<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Form(
-        key: _formKey,
-        child: Builder(
-          builder: (BuildContext context) => Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                _titleText,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.blue,
-                  fontWeight: FontWeight.bold,
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Builder(
+            builder: (BuildContext context) => Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _titleText,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.blue,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textScaler: TextScaler.linear(1.5),
                 ),
-                textScaler: TextScaler.linear(1.5),
-              ),
-              const Text(
-                "Por favor forneça suas credenciais.",
-                textAlign: TextAlign.center,
-                textScaler: TextScaler.linear(1.25),
-              ),
-              const SizedBox(height: 16.0),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'E-mail',
-                  border: OutlineInputBorder(),
+                const Text(
+                  "Por favor forneça suas credenciais.",
+                  textAlign: TextAlign.center,
+                  textScaler: TextScaler.linear(1.25),
                 ),
-                keyboardType: TextInputType.emailAddress,
-                autofillHints: const [AutofillHints.email],
-                autovalidateMode: AutovalidateMode.onUnfocus,
-                validator: (value) {
-                  return _emailValidator.validate(
-                    label: "E-mail",
-                    value: value,
-                  );
-                },
-              ),
-              const SizedBox(height: 16.0),
-              TextFormField(
-                controller: _passwordController,
-                autovalidateMode: AutovalidateMode.onUnfocus,
-                validator: (value) =>
-                    _passwordValidator.validate(label: "Senha", value: value),
-                decoration: InputDecoration(
-                  labelText: _passwordFieldLabel,
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 16.0),
+                TextFormField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(
+                    labelText: 'E-mail',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                  autofillHints: const [AutofillHints.email],
+                  autovalidateMode: AutovalidateMode.onUnfocus,
+                  validator: (value) {
+                    return _emailValidator.validate(
+                      label: "E-mail",
+                      value: value,
+                    );
+                  },
                 ),
-                obscureText: true,
-                autofillHints: const [AutofillHints.password],
-              ),
-              const SizedBox(height: 24.0),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _onSubmitLoginForm,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12.0),
-                    child: Text(
-                      _loginButtonText,
-                      style: TextStyle(fontSize: 16),
+                const SizedBox(height: 16.0),
+                TextFormField(
+                  controller: _passwordController,
+                  autovalidateMode: AutovalidateMode.onUnfocus,
+                  validator: (value) =>
+                      _passwordValidator.validate(label: "Senha", value: value),
+                  decoration: InputDecoration(
+                    labelText: _passwordFieldLabel,
+                    border: OutlineInputBorder(),
+                  ),
+                  obscureText: true,
+                  autofillHints: const [AutofillHints.password],
+                ),
+                const SizedBox(height: 24.0),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _onSubmitLoginForm,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12.0),
+                      child: Text(
+                        _loginButtonText,
+                        style: TextStyle(fontSize: 16),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16.0),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      // Forgot password logic will be implemented later
-                      loginLogger.i('Forgot password requested');
-                    },
-                    child: const Text('Esqueceu a senha?'),
-                  ),
-                  TextButton(
-                    onPressed: _onClickSignup,
-                    child: Text(_signUpText),
-                  ),
-                ],
-              ),
-            ],
+                const SizedBox(height: 16.0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        // Forgot password logic will be implemented later
+                        loginLogger.i('Forgot password requested');
+                      },
+                      child: const Text('Esqueceu a senha?'),
+                    ),
+                    TextButton(
+                      onPressed: _onClickSignup,
+                      child: Text(_signUpText),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
