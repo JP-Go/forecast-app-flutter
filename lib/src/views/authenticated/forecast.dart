@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
@@ -20,27 +22,46 @@ class Forecast extends State<ForecastView> {
   int indexSelected = 0;
   DateTime selectedDate = DateTime.now();
 
-  late final Future<OpenWeatherAPIGetForecastsResponse> _data = _getPosition()
-      .then((pos) async {
+  late Future<OpenWeatherAPIGetForecastsResponse> _data;
+
+  @override
+  void initState() {
+    super.initState();
+    _data = _getPosition().then((pos) async {
+      final location = Location(lat: pos.latitude, lng: pos.longitude);
+      final forecast = await _api.getForecasts(location);
+      return forecast;
+    });
+  }
+
+  void _fetchForecastData() {
+    setState(() {
+      _data = _getPosition().then((pos) async {
         final location = Location(lat: pos.latitude, lng: pos.longitude);
         final forecast = await _api.getForecasts(location);
         return forecast;
       });
+    });
+  }
 
   Future<Position> _getPosition() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      return Future.error("Location services disabled");
+      return Future.error(LocationServiceDisabledException());
     }
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        return Future.error("Location services not authorized");
+        return Future.error(
+          PermissionDeniedException("Location services not authorized"),
+        );
       }
     }
     if (permission == LocationPermission.deniedForever) {
-      return Future.error("Location services not authorized");
+      return Future.error(
+        PermissionDeniedException("Location services not authorized"),
+      );
     }
     return await Geolocator.getCurrentPosition(
       locationSettings: LocationSettings(accuracy: LocationAccuracy.low),
@@ -88,6 +109,13 @@ class Forecast extends State<ForecastView> {
                             dayForecast.dt.toInt() * 1000,
                             isUtc: true,
                           );
+                          final temp =
+                              dayForecast.temp.day - Random().nextInt(20);
+                          final feeling = temp > 30
+                              ? TemperatureFeeling.hot
+                              : temp > 18
+                              ? TemperatureFeeling.mild
+                              : TemperatureFeeling.cold;
 
                           return Padding(
                             padding: const EdgeInsets.only(right: 12.0),
@@ -95,17 +123,18 @@ class Forecast extends State<ForecastView> {
                               date: date,
                               minTemp: dayForecast.temp.min.toInt(),
                               maxTemp: dayForecast.temp.max.toInt(),
-                              forecastClass: TemperatureFeeling.hot,
+                              forecastClass: feeling,
                               isToday: index == 0,
                               isSelected: indexSelected == index,
                               onTap: () {
                                 setState(() {
                                   indexSelected = index;
                                   selectedForecast = data.daily[indexSelected];
-                                  DateTime.fromMillisecondsSinceEpoch(
-                                    selectedForecast.dt.toInt() * 1000,
-                                    isUtc: true,
-                                  );
+                                  selectedDate =
+                                      DateTime.fromMillisecondsSinceEpoch(
+                                        selectedForecast.dt.toInt() * 1000,
+                                        isUtc: true,
+                                      );
                                 });
                               },
                             ),
@@ -127,7 +156,7 @@ class Forecast extends State<ForecastView> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '${indexSelected == 0 ? data.current.temp.toInt() : selectedForecast.temp.day}°',
+                            '${indexSelected == 0 ? data.current.temp.toInt() : selectedForecast.temp.day.toInt()}°',
                             style: theme.textTheme.displayLarge?.copyWith(
                               color: colorScheme.primary,
                               fontWeight: FontWeight.bold,
@@ -187,12 +216,57 @@ class Forecast extends State<ForecastView> {
                   ],
                 ),
               );
-            } else {
-              return CircularProgressIndicator();
+            } else if (snapshot.hasError) {
+              return _errorWidget(snapshot.error!, context);
             }
+            return CircularProgressIndicator();
           },
         ),
         //
+      ),
+    );
+  }
+
+  Widget _errorWidget(Object error, BuildContext context) {
+    Text text;
+    ElevatedButton button;
+    if (error is LocationServiceDisabledException) {
+      text = Text(error.toString());
+      button = ElevatedButton(
+        onPressed: () async {
+          Geolocator.openLocationSettings().then((val) {
+            if (val) {
+              _fetchForecastData();
+            }
+          });
+        },
+        child: Text("Click here to activate location services"),
+      );
+    } else if (error is PermissionDeniedException) {
+      text = Text(error.toString());
+      button = ElevatedButton(
+        onPressed: _fetchForecastData,
+        child: const Text(
+          "Click here to get permission for the location services",
+        ),
+      );
+    } else {
+      text = Text("Unexpected error");
+      button = ElevatedButton(
+        child: Text("Try again"),
+        onPressed: () {
+          setState(() {});
+        },
+      );
+    }
+
+    return Scaffold(
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Center(child: text),
+          button,
+        ],
       ),
     );
   }
@@ -208,8 +282,8 @@ class _ForecastIcon extends StatelessWidget {
     IconData icon = _temperatureFeeling == TemperatureFeeling.hot
         ? Icons.sunny
         : _temperatureFeeling == TemperatureFeeling.mild
-        ? Icons.cloud
-        : Icons.incomplete_circle_sharp;
+        ? Icons.sunny_snowing
+        : Icons.ac_unit_sharp;
     return Icon(icon);
   }
 }

@@ -43,7 +43,7 @@ class _LoginFormState extends State<LoginForm> {
   var _onSignup = false;
 
   final List<Map<String, String>> _validCreds = [
-    {"email": "email@teste.com", "password": "senhasegura"},
+    {"email": "test@test.com", "password": "password"},
   ];
 
   final _formKey = GlobalKey<FormState>();
@@ -69,7 +69,7 @@ class _LoginFormState extends State<LoginForm> {
                   textScaler: TextScaler.linear(1.5),
                 ),
                 const Text(
-                  "Por favor forneça suas credenciais.",
+                  "Please provide your credentials.",
                   textAlign: TextAlign.center,
                   textScaler: TextScaler.linear(1.25),
                 ),
@@ -94,8 +94,10 @@ class _LoginFormState extends State<LoginForm> {
                 TextFormField(
                   controller: _passwordController,
                   autovalidateMode: AutovalidateMode.onUnfocus,
-                  validator: (value) =>
-                      _passwordValidator.validate(label: "Senha", value: value),
+                  validator: (value) => _passwordValidator.validate(
+                    label: "Password",
+                    value: value,
+                  ),
                   decoration: InputDecoration(
                     labelText: _passwordFieldLabel,
                     border: OutlineInputBorder(),
@@ -126,7 +128,7 @@ class _LoginFormState extends State<LoginForm> {
                         // Forgot password logic will be implemented later
                         loginLogger.i('Forgot password requested');
                       },
-                      child: const Text('Esqueceu a senha?'),
+                      child: const Text('Forgot my password'),
                     ),
                     TextButton(
                       onPressed: _onClickSignup,
@@ -153,25 +155,25 @@ class _LoginFormState extends State<LoginForm> {
     setState(() {
       _onSignup = !_onSignup;
       if (!_onSignup) {
-        _passwordFieldLabel = "Senha";
+        _passwordFieldLabel = "Password";
         _loginButtonText = "Login";
-        _signUpText = "Criar conta";
-        _titleText = "Bem vindo de volta!";
+        _signUpText = "Sign up";
+        _titleText = "Welcome back!";
         return;
       }
-      _passwordFieldLabel = "Senha (mínimo 8 caracteres)";
-      _loginButtonText = "Criar conta";
+      _passwordFieldLabel = "Password (min 8 characters)";
+      _loginButtonText = "Create account";
       _signUpText = "Login";
-      _titleText = "Bom ter você aqui.";
+      _titleText = "It's good to have you here.";
     });
     loginLogger.i('Sign up requested');
   }
 
   void _onSubmitLoginForm() {
     if (!_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Campos inválidos. ")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Invalid fields. Try again.")),
+      );
       return;
     }
     if (_onSignup) {
@@ -181,20 +183,19 @@ class _LoginFormState extends State<LoginForm> {
       });
       _onClickSignup();
       return;
-      // TODO: navigate to the next screen
     }
     if (!_validCreds.any((creds) {
       return creds["email"] == _emailController.text.trim() &&
           creds["password"] == _passwordController.text.trim();
     })) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Credenciais inválidas. Tente novamente")),
+        const SnackBar(content: Text("Invalid credentials. Try again.")),
       );
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Credenciais válidadas. Entrando.")),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Loading.")));
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => const ForecastView()),
     );
