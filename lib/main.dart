@@ -5,6 +5,10 @@ import 'package:weather/src/views/public/login.dart';
 
 void main() {
   dotenv.load();
+  var apiKey = dotenv.env["API_KEY"];
+  if (apiKey == null || apiKey.isEmpty) {
+    throw "No API_KEY defined";
+  }
   runApp(const MyApp());
 }
 

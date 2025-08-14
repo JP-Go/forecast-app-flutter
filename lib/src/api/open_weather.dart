@@ -22,6 +22,10 @@ class OpenWeatherAPI {
   final _baseUrl = Uri.https("api.openweathermap.org", "");
   final _apiKey = dotenv.env["API_KEY"];
 
+  OpenWeatherAPI() {
+    if (_apiKey == null || _apiKey.isEmpty) {}
+  }
+
   Future<OpenWeatherAPIGetForecastsResponse> getForecasts(
     Location location,
   ) async {
