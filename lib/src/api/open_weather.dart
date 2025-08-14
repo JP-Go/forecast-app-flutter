@@ -1,6 +1,5 @@
 import "dart:convert";
 
-import "package:flutter_dotenv/flutter_dotenv.dart";
 import "package:json_annotation/json_annotation.dart";
 import "package:http/http.dart" as http;
 
@@ -20,11 +19,7 @@ class Location {
 
 class OpenWeatherAPI {
   final _baseUrl = Uri.https("api.openweathermap.org", "");
-  final _apiKey = dotenv.env["API_KEY"];
-
-  OpenWeatherAPI() {
-    if (_apiKey == null || _apiKey.isEmpty) {}
-  }
+  final _apiKey = const String.fromEnvironment("API_KEY");
 
   Future<OpenWeatherAPIGetForecastsResponse> getForecasts(
     Location location,

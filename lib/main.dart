@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:weather/src/views/public/login.dart';
 
 void main() {
-  dotenv.load();
-  var apiKey = dotenv.env["API_KEY"];
-  if (apiKey == null || apiKey.isEmpty) {
-    throw "No API_KEY defined";
-  }
   runApp(const MyApp());
 }
 
