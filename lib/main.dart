@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:weather/src/views/public/login.dart';
-import 'package:weather/src/config/form_validation_translations.dart';
 
 void main() {
   dotenv.load();
-  FormTranslations.translateToPTBR();
   runApp(const MyApp());
 }
 
@@ -17,7 +16,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Weather App With Flutter',
-      localizationsDelegates: [],
+      localizationsDelegates: [
+        GlobalWidgetsLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+      ],
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.blue,

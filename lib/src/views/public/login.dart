@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:form_validation/form_validation.dart';
 import 'package:logger/logger.dart';
@@ -7,20 +8,25 @@ const textStyle = TextStyle(fontSize: 24);
 
 var loginLogger = Logger();
 
-class LoginForm extends StatefulWidget {
-  const LoginForm({super.key});
-
-  @override
-  State<LoginForm> createState() => _LoginFormState();
-}
-
 class LoginView extends StatelessWidget {
   const LoginView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) {
+      return Scaffold(
+        body: Center(child: SizedBox(width: 768, child: LoginForm())),
+      );
+    }
     return Scaffold(body: Center(child: LoginForm()));
   }
+}
+
+class LoginForm extends StatefulWidget {
+  const LoginForm({super.key});
+
+  @override
+  State<LoginForm> createState() => _LoginFormState();
 }
 
 class _LoginFormState extends State<LoginForm> {
@@ -36,10 +42,10 @@ class _LoginFormState extends State<LoginForm> {
     ],
   );
 
-  var _titleText = "Bem vindo de volta!";
+  var _titleText = "Welcome back!";
   var _loginButtonText = "Login";
-  var _passwordFieldLabel = "Senha";
-  var _signUpText = "Criar conta";
+  var _passwordFieldLabel = "Password";
+  var _signUpText = "Sign up";
   var _onSignup = false;
 
   final List<Map<String, String>> _validCreds = [

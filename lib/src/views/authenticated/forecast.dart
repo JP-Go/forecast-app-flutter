@@ -1,5 +1,6 @@
-import 'dart:math';
+import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
@@ -8,16 +9,32 @@ import 'package:weather/src/views/public/login.dart';
 
 enum TemperatureFeeling { hot, mild, cold }
 
-class ForecastView extends StatefulWidget {
+class ForecastView extends StatelessWidget {
   const ForecastView({super.key});
 
   @override
-  State<ForecastView> createState() {
+  Widget build(BuildContext context) {
+    if (kIsWeb) {
+      return Scaffold(
+        body: SafeArea(
+          child: Center(child: SizedBox(width: 768, child: ForecastLayout())),
+        ),
+      );
+    }
+    return Scaffold(body: SafeArea(child: ForecastLayout()));
+  }
+}
+
+class ForecastLayout extends StatefulWidget {
+  const ForecastLayout({super.key});
+
+  @override
+  State<ForecastLayout> createState() {
     return Forecast();
   }
 }
 
-class Forecast extends State<ForecastView> {
+class Forecast extends State<ForecastLayout> {
   final OpenWeatherAPI _api = OpenWeatherAPI();
   int indexSelected = 0;
   DateTime selectedDate = DateTime.now();
@@ -83,146 +100,175 @@ class Forecast extends State<ForecastView> {
       Navigator.pop(context, "close");
     }
 
-    return Scaffold(
-      body: SafeArea(
-        child: FutureBuilder<OpenWeatherAPIGetForecastsResponse>(
-          future: _data,
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              var data = snapshot.data!;
-              OpenWeatherAPIGetForecastsResponseDaily selectedForecast =
-                  data.daily[indexSelected];
-              return Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Weekly forecast cards
-                    SizedBox(
-                      height: 120,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: data.daily.length,
-                        itemBuilder: (context, index) {
-                          var dayForecast = data.daily[index];
-                          var date = DateTime.fromMillisecondsSinceEpoch(
-                            dayForecast.dt.toInt() * 1000,
-                            isUtc: true,
-                          );
-                          final temp =
-                              dayForecast.temp.day - Random().nextInt(20);
-                          final feeling = temp > 30
-                              ? TemperatureFeeling.hot
-                              : temp > 18
-                              ? TemperatureFeeling.mild
-                              : TemperatureFeeling.cold;
+    return SafeArea(
+      child: FutureBuilder<OpenWeatherAPIGetForecastsResponse>(
+        future: _data,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            var data = snapshot.data!;
+            OpenWeatherAPIGetForecastsResponseDaily selectedForecast =
+                data.daily[indexSelected];
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Weekly forecast cards
+                  SizedBox(
+                    height: 120,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: data.daily.length,
+                      itemBuilder: (context, index) {
+                        var dayForecast = data.daily[index];
+                        var date = DateTime.fromMillisecondsSinceEpoch(
+                          dayForecast.dt.toInt() * 1000,
+                          isUtc: true,
+                        );
+                        final temp = dayForecast.temp.day;
+                        final feeling = temp > 30
+                            ? TemperatureFeeling.hot
+                            : temp > 18
+                            ? TemperatureFeeling.mild
+                            : TemperatureFeeling.cold;
 
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 12.0),
-                            child: _WeekDayCard(
-                              date: date,
-                              minTemp: dayForecast.temp.min.toInt(),
-                              maxTemp: dayForecast.temp.max.toInt(),
-                              forecastClass: feeling,
-                              isToday: index == 0,
-                              isSelected: indexSelected == index,
-                              onTap: () {
-                                setState(() {
-                                  indexSelected = index;
-                                  selectedForecast = data.daily[indexSelected];
-                                  selectedDate =
-                                      DateTime.fromMillisecondsSinceEpoch(
-                                        selectedForecast.dt.toInt() * 1000,
-                                        isUtc: true,
-                                      );
-                                });
-                              },
-                            ),
-                          );
-                        },
-                      ),
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 12.0),
+                          child: _WeekDayCard(
+                            date: date,
+                            minTemp: dayForecast.temp.min.toInt(),
+                            maxTemp: dayForecast.temp.max.toInt(),
+                            forecastClass: feeling,
+                            isToday: index == 0,
+                            isSelected: indexSelected == index,
+                            onTap: () {
+                              setState(() {
+                                indexSelected = index;
+                                selectedForecast = data.daily[indexSelected];
+                                selectedDate =
+                                    DateTime.fromMillisecondsSinceEpoch(
+                                      selectedForecast.dt.toInt() * 1000,
+                                      isUtc: true,
+                                    );
+                              });
+                            },
+                          ),
+                        );
+                      },
                     ),
-                    const SizedBox(height: 48),
-                    // Current weather section
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Lat: ${data.lat.toStringAsPrecision(2)}, Lon: ${data.lon.toStringAsPrecision(2)}',
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              color: colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '${indexSelected == 0 ? data.current.temp.toInt() : selectedForecast.temp.day.toInt()}°',
-                            style: theme.textTheme.displayLarge?.copyWith(
-                              color: colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            DateFormat('EEEE, MMMM d').format(selectedDate),
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: colorScheme.onSurface.withAlpha(179),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _TemperatureLabel(
-                                label: 'Min',
-                                temperature: selectedForecast.temp.min.toInt(),
-                                color: colorScheme.primary,
-                              ),
-                              const SizedBox(width: 32),
-                              _TemperatureLabel(
-                                label: 'Max',
-                                temperature: selectedForecast.temp.max.toInt(),
-                                color: colorScheme.primary,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                  ),
+                  const SizedBox(height: 48),
+                  // Current weather section
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        FloatingActionButton.small(
-                          onPressed: () => showDialog<String>(
-                            context: context,
-                            builder: (context) => AlertDialog.adaptive(
-                              title: const Text("Tem certeza que quer sair?"),
-                              actions: [
-                                TextButton(
-                                  onPressed: backToLogin,
-                                  child: const Text("Sim"),
-                                ),
-                                TextButton(
-                                  onPressed: closeDialog,
-                                  child: const Text("Não"),
-                                ),
-                              ],
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Latitute:",
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: colorScheme.onSurface,
+                              ),
                             ),
+                            Text(
+                              '${data.lat.toStringAsPrecision(2)}°',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Text(
+                              "Longitude:",
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            Text(
+                              "${data.lon.toStringAsPrecision(2)}°",
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${indexSelected == 0 ? data.current.temp.toInt() : selectedForecast.temp.day.toInt()}°',
+                          style: theme.textTheme.displayLarge?.copyWith(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
                           ),
-                          child: Icon(Icons.exit_to_app_sharp),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          DateFormat('EEEE, MMMM d').format(selectedDate),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: colorScheme.onSurface.withAlpha(179),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _TemperatureLabel(
+                              label: 'Min',
+                              temperature: selectedForecast.temp.min.toInt(),
+                              color: colorScheme.primary,
+                            ),
+                            const SizedBox(width: 32),
+                            _TemperatureLabel(
+                              label: 'Max',
+                              temperature: selectedForecast.temp.max.toInt(),
+                              color: colorScheme.primary,
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
-              );
-            } else if (snapshot.hasError) {
-              return _errorWidget(snapshot.error!, context);
-            }
-            return CircularProgressIndicator();
-          },
-        ),
-        //
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      FloatingActionButton.small(
+                        onPressed: () => showDialog<String>(
+                          context: context,
+                          builder: (context) => AlertDialog.adaptive(
+                            title: const Text("Tem certeza que quer sair?"),
+                            actions: [
+                              TextButton(
+                                onPressed: backToLogin,
+                                child: const Text("Sim"),
+                              ),
+                              TextButton(
+                                onPressed: closeDialog,
+                                child: const Text("Não"),
+                              ),
+                            ],
+                          ),
+                        ),
+                        child: Icon(Icons.exit_to_app_sharp),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          } else if (snapshot.hasError) {
+            return _errorWidget(snapshot.error!, context);
+          }
+          return Scaffold(
+            body: SafeArea(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [Center(child: CircularProgressIndicator.adaptive())],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -384,7 +430,7 @@ class _WeekDayCard extends StatelessWidget {
                       color: isToday
                           ? colorScheme.onPrimaryContainer
                           : colorScheme.onSurface,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
@@ -395,7 +441,7 @@ class _WeekDayCard extends StatelessWidget {
                       color: isToday
                           ? colorScheme.onPrimaryContainer
                           : colorScheme.onSurface,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
