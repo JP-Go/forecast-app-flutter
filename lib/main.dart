@@ -1,9 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:weather/src/views/public/login.dart';
 
-void main() {
+void main() async {
   runApp(const MyApp());
+  bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    return Future.error(LocationServiceDisabledException());
+  }
+  LocationPermission permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      return Future.error(
+        PermissionDeniedException("Location services not authorized"),
+      );
+    }
+  }
+  if (permission == LocationPermission.deniedForever) {
+    return Future.error(
+      PermissionDeniedException("Location services not authorized"),
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {

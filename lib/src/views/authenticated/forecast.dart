@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
+import 'package:logger/logger.dart';
 import 'package:weather/src/api/open_weather.dart';
 import 'package:weather/src/views/public/login.dart';
 
@@ -274,15 +275,22 @@ class Forecast extends State<ForecastLayout> {
   Widget _errorWidget(Object error, BuildContext context) {
     Text text;
     ElevatedButton button;
+    var logger = Logger();
+    logger.e(error);
     if (error is LocationServiceDisabledException) {
       text = Text(error.toString());
       button = ElevatedButton(
         onPressed: () async {
-          Geolocator.openLocationSettings().then((val) {
-            if (val) {
-              _fetchForecastData();
-            }
-          });
+          bool locationServiceActive =
+              await Geolocator.isLocationServiceEnabled();
+          logger.i("Initialize");
+          if (!locationServiceActive) {
+            await Geolocator.openLocationSettings();
+          }
+          if (locationServiceActive) {
+            logger.i("running fetch");
+            _fetchForecastData();
+          }
         },
         child: Text("Click here to activate location services"),
       );
@@ -295,6 +303,7 @@ class Forecast extends State<ForecastLayout> {
         ),
       );
     } else {
+      logger.e(error);
       text = Text("Unexpected error");
       button = ElevatedButton(
         child: Text("Try again"),
